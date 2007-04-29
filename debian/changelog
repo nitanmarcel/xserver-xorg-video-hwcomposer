@@ -7,7 +7,16 @@ xserver-xorg-video-dummy (1:0.2.0-6) UNRELEASED; urgency=low
   [ Timo Aaltonen ]
   * Replaces/Conflicts: xserver-xorg-driver-dummy.
 
- -- Timo Aaltonen <tjaalton@cc.hut.fi>  Tue, 24 Apr 2007 13:14:06 +0300
+  [ Brice Goglin ]
+  * Install the upstream changelog.
+  * Bump Build-Depends: xserver-xorg-dev to >= 2:1.2.99.902
+    (needed to let xsfbs get access to serverminver).
+  * Add XS-Vcs-*.
+  * Add a link to www.X.org and a reference to the xf86-video-dummy
+    module in the long description.
+  * Remove Fabio from uploaders with his permission. He's always welcome back.
+
+ -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 29 Apr 2007 14:43:29 +0200
 
 xserver-xorg-video-dummy (1:0.2.0-5) experimental; urgency=low
 
