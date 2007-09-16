@@ -1,4 +1,4 @@
-xserver-xorg-video-dummy (1:0.2.0-6) UNRELEASED; urgency=low
+xserver-xorg-video-dummy (1:0.2.0-6) unstable; urgency=low
 
   [ Julien Cristau ]
   * Add link to xserver-xorg-core bug script, so that bugreports contain
@@ -16,7 +16,10 @@ xserver-xorg-video-dummy (1:0.2.0-6) UNRELEASED; urgency=low
     module in the long description.
   * Remove Fabio from uploaders with his permission. He's always welcome back.
 
- -- Brice Goglin <Brice.Goglin@ens-lyon.org>  Sun, 29 Apr 2007 14:43:29 +0200
+  [ David Nusinow ]
+  * Upload to unstable
+
+ -- David Nusinow <dnusinow@debian.org>  Sun, 16 Sep 2007 16:44:43 -0400
 
 xserver-xorg-video-dummy (1:0.2.0-5) experimental; urgency=low
 
