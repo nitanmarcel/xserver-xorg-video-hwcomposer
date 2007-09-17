@@ -1,8 +1,9 @@
 xserver-xorg-video-dummy (1:0.2.0-7) UNRELEASED; urgency=low
 
+  * Build against Xserver 1.4, closes: #442897.
   * Add the upstream URL to debian/copyright.
 
- -- Brice Goglin <bgoglin@debian.org>  Mon, 17 Sep 2007 23:30:47 +0200
+ -- Brice Goglin <bgoglin@debian.org>  Mon, 17 Sep 2007 23:32:14 +0200
 
 xserver-xorg-video-dummy (1:0.2.0-6) unstable; urgency=low
 
