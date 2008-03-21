@@ -1,6 +1,9 @@
 xserver-xorg-video-dummy (1:0.3.0-1) UNRELEASED; urgency=low
 
   * New upstream release.
+  * Build against xserver 1.4.99.901.
+  * Bump Standards-Version to 3.7.3.
+  * Drop the XS- prefix from Vcs-* control fields.
 
  -- Julien Cristau <jcristau@debian.org>  Fri, 21 Mar 2008 14:42:50 +0100
 
