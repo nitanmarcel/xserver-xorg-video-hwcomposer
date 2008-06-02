@@ -1,4 +1,4 @@
-xserver-xorg-video-dummy (1:0.3.0-1) UNRELEASED; urgency=low
+xserver-xorg-video-dummy (1:0.3.0-1) unstable; urgency=low
 
   * New upstream release.
   * Bump Standards-Version to 3.7.3.
@@ -10,7 +10,7 @@ xserver-xorg-video-dummy (1:0.3.0-1) UNRELEASED; urgency=low
     dpkg-shlibdeps to shut up about symbols it can't find.  Build-depend on
     dpkg-dev >= 1.14.17.
 
- -- Julien Cristau <jcristau@debian.org>  Fri, 21 Mar 2008 14:42:50 +0100
+ -- Julien Cristau <jcristau@debian.org>  Mon, 02 Jun 2008 21:55:35 +0200
 
 xserver-xorg-video-dummy (1:0.2.0-7) unstable; urgency=low
 
