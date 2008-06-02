@@ -5,6 +5,10 @@ xserver-xorg-video-dummy (1:0.3.0-1) UNRELEASED; urgency=low
   * Drop the XS- prefix from Vcs-* control fields.
   * Switch to debhelper compat 5.
   * Add myself to Uploaders.
+  * Run dpkg-shlibdeps with --warnings=6.  Drivers reference symbols from
+    /usr/bin/Xorg and other modules, and that's not a bug, so we want
+    dpkg-shlibdeps to shut up about symbols it can't find.  Build-depend on
+    dpkg-dev >= 1.14.17.
 
  -- Julien Cristau <jcristau@debian.org>  Fri, 21 Mar 2008 14:42:50 +0100
 
