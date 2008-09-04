@@ -1,3 +1,9 @@
+xserver-xorg-video-dummy (1:0.3.0-2) experimental; urgency=low
+
+  * Build against xserver 1.5.
+
+ -- Julien Cristau <jcristau@debian.org>  Thu, 04 Sep 2008 19:29:32 +0200
+
 xserver-xorg-video-dummy (1:0.3.0-1) unstable; urgency=low
 
   * New upstream release.
