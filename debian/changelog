@@ -3,6 +3,7 @@ xserver-xorg-video-dummy (1:0.3.1-1) UNRELEASED; urgency=low
   * New upstream release.
   * Run autoreconf on build; build-depend on automake, libtool and xutils-dev.
   * Handle parallel builds.
+  * Build against xserver 1.6 rc1.
 
  -- Julien Cristau <jcristau@debian.org>  Sun, 25 Jan 2009 23:43:27 +0100
 
