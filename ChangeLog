@@ -1,3 +1,15 @@
+commit d876e719969e9d33e7e4502448a544f12eb0fab8
+Author: Julien Cristau <jcristau@debian.org>
+Date:   Sun Jan 25 23:25:33 2009 +0100
+
+    dummy 0.3.1
+
+commit 33e86171bd1815a23f35bb992a91c02785c22402
+Author: Adam Jackson <ajax@redhat.com>
+Date:   Fri Aug 15 14:05:04 2008 -0400
+
+    Uninclude xf86Version.h
+
 commit 0dcdce106d01aa6ff611436c3f8374241e7a8da8
 Author: Adam Jackson <ajax@redhat.com>
 Date:   Wed Mar 19 17:31:28 2008 -0400
