@@ -1,3 +1,9 @@
+xserver-xorg-video-dummy (1:0.3.1-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Julien Cristau <jcristau@debian.org>  Sat, 11 Apr 2009 11:03:45 +0100
+
 xserver-xorg-video-dummy (1:0.3.1-1) experimental; urgency=low
 
   * New upstream release.
