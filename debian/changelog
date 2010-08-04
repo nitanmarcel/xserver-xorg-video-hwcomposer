@@ -1,3 +1,11 @@
+xserver-xorg-video-dummy (1:0.3.4-1) UNRELEASED; urgency=low
+
+  * New upstream release
+    - Fix build against Xserver 1.9
+  * Bump Standards-Version to 3.9.1
+
+ -- Christopher James Halse Rogers <raof@ubuntu.com>  Wed, 04 Aug 2010 10:44:28 +1000
+
 xserver-xorg-video-dummy (1:0.3.3-2) unstable; urgency=medium
 
   * Update xsfbs, use new ${xviddriver:Depends} substvar.
