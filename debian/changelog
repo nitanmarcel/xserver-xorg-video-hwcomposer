@@ -3,6 +3,7 @@ xserver-xorg-video-dummy (1:0.3.5-1) UNRELEASED; urgency=low
   * New upstream release:
     - Add support for big resolutions.
     - Allow disabling DGA.
+  * Disable DGA support, it has been dead for a while.
 
  -- Cyril Brulebois <kibi@debian.org>  Sun, 01 Jan 2012 07:19:53 +0100
 
