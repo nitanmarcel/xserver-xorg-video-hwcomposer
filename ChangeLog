@@ -1,3 +1,16 @@
+commit 02918fd53434a23a72fe878a90f4ec48ef0e0416
+Author: Jeremy Huddleston <jeremyhu@apple.com>
+Date:   Mon Jan 9 01:00:40 2012 -0800
+
+    Don't use XFreeXDGA to determine DGA support
+    
+    If our server supports DGA and we want to build the dummy driver without it,
+    XFreeXDGA will be defined by the server and will be picked up rather than
+    our configuration option.  This change forces us to honor our configuration
+    hoice.
+    
+    Signed-off-by: Jeremy Huddleston <jeremyhu@apple.com>
+
 commit bccf37f052748386902112b770b89d81bddfaeb8
 Author: Cyril Brulebois <kibi@debian.org>
 Date:   Sun Jan 1 07:15:36 2012 +0100
