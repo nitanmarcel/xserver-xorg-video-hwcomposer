@@ -1,6 +1,7 @@
 xserver-xorg-video-dummy (1:0.3.6-1) UNRELEASED; urgency=low
 
   * New upstream release.
+  * Bump Standards-Version to 3.9.3 (no changes needed)
 
  -- Maarten Lankhorst <maarten.lankhorst@canonical.com>  Wed, 18 Jul 2012 15:57:12 +0200
 
