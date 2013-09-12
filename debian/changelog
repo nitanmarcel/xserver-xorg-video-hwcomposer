@@ -8,6 +8,9 @@ xserver-xorg-video-dummy (1:0.3.7-1) UNRELEASED; urgency=low
   * Bump Standards-Version to 3.9.4, no changes needed.
   * New upstream release.
 
+  [ Julien Cristau ]
+  * Disable silent build rules.
+
  -- Michele Cane <michele.cane@gmail.com>  Thu, 12 Sep 2013 16:14:14 +0200
 
 xserver-xorg-video-dummy (1:0.3.5-2) unstable; urgency=high
