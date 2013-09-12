@@ -1,4 +1,4 @@
-xserver-xorg-video-dummy (1:0.3.6-1) UNRELEASED; urgency=low
+xserver-xorg-video-dummy (1:0.3.7-1) UNRELEASED; urgency=low
 
   [ Maarten Lankhorst ]
   * New upstream release.
@@ -6,8 +6,9 @@ xserver-xorg-video-dummy (1:0.3.6-1) UNRELEASED; urgency=low
 
   [ Michele Cane ]
   * Bump Standards-Version to 3.9.4, no changes needed.
+  * New upstream release.
 
- -- Maarten Lankhorst <maarten.lankhorst@canonical.com>  Wed, 18 Jul 2012 15:57:12 +0200
+ -- Michele Cane <michele.cane@gmail.com>  Thu, 12 Sep 2013 16:14:14 +0200
 
 xserver-xorg-video-dummy (1:0.3.5-2) unstable; urgency=high
 
