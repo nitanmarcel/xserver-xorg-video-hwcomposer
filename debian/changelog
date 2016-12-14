@@ -6,6 +6,8 @@ xserver-xorg-video-dummy (1:0.3.8-1) UNRELEASED; urgency=medium
   * Bump debhelper compat to 10.
     - Let debhelper call autoreconf for us.
   * Don't pass --disable-silent-rules, debhelper does that for a while.
+  * debian/watch: check upstream signatures with...
+  * debian/upstream/signing-key.asc: ...the upstream keys.
 
  -- Emilio Pozuelo Monfort <pochu@debian.org>  Wed, 14 Dec 2016 22:31:37 +0100
 
