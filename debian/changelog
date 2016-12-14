@@ -5,6 +5,7 @@ xserver-xorg-video-dummy (1:0.3.8-1) UNRELEASED; urgency=medium
       as the latter is gone in the xserver. Closes: #845728.
   * Bump debhelper compat to 10.
     - Let debhelper call autoreconf for us.
+    - Set libdir to /usr/lib, which is where the xserver expects the drivers.
   * Don't pass --disable-silent-rules, debhelper does that for a while.
   * debian/watch: check upstream signatures with...
   * debian/upstream/signing-key.asc: ...the upstream keys.

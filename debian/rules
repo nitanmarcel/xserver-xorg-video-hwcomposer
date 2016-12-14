@@ -3,6 +3,7 @@
 # Disable DGA support, it's been on the way out for a while already:
 override_dh_auto_configure:
 	dh_auto_configure -- \
+		--libdir=\$${exec_prefix}/lib \
 		--disable-dga
 
 # Install in debian/tmp to retain control through dh_install:
