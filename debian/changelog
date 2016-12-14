@@ -9,6 +9,7 @@ xserver-xorg-video-dummy (1:0.3.8-1) UNRELEASED; urgency=medium
   * Don't pass --disable-silent-rules, debhelper does that for a while.
   * debian/watch: check upstream signatures with...
   * debian/upstream/signing-key.asc: ...the upstream keys.
+  * Bump Standards-Version to 3.9.8.
 
  -- Emilio Pozuelo Monfort <pochu@debian.org>  Wed, 14 Dec 2016 22:31:37 +0100
 
