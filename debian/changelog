@@ -4,6 +4,7 @@ xserver-xorg-video-dummy (1:0.3.8-1) UNRELEASED; urgency=medium
     - Uses dixChangeWindowProperty instead of ChangeWindowProperty,
       as the latter is gone in the xserver. Closes: #845728.
   * Bump debhelper compat to 10.
+    - Let debhelper call autoreconf for us.
 
  -- Emilio Pozuelo Monfort <pochu@debian.org>  Wed, 14 Dec 2016 22:31:37 +0100
 
