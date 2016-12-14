@@ -1,4 +1,4 @@
-xserver-xorg-video-dummy (1:0.3.8-1) UNRELEASED; urgency=medium
+xserver-xorg-video-dummy (1:0.3.8-1) unstable; urgency=medium
 
   * New upstream release.
     - Uses dixChangeWindowProperty instead of ChangeWindowProperty,
@@ -12,7 +12,7 @@ xserver-xorg-video-dummy (1:0.3.8-1) UNRELEASED; urgency=medium
   * Bump Standards-Version to 3.9.8.
   * Switch URLs to https.
 
- -- Emilio Pozuelo Monfort <pochu@debian.org>  Wed, 14 Dec 2016 22:31:37 +0100
+ -- Emilio Pozuelo Monfort <pochu@debian.org>  Thu, 15 Dec 2016 00:11:05 +0100
 
 xserver-xorg-video-dummy (1:0.3.7-1) unstable; urgency=low
 
