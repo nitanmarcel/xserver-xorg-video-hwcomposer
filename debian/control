@@ -14,7 +14,8 @@ Build-Depends: debhelper (>= 10),
                x11proto-render-dev,
                xutils-dev,
                libhybris-dev,
-               android-headers
+               android-headers,
+               libepoxy-dev
 Standards-Version: 4.1.1
 Vcs-Git: https://github.com/debian-pm/xserver-xorg-video-hwcomposer-packaging.git
 Vcs-Browser: https://github.com/debian-pm/xserver-xorg-video-hwcomposer-packaging
