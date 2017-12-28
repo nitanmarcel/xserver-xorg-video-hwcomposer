@@ -22,10 +22,10 @@
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xf86-video-dummy],
+AC_INIT([xf86-video-hwcomposer],
         [0.3.8],
         [https://bugs.freedesktop.org/enter_bug.cgi?product=xorg],
-        [xf86-video-dummy])
+        [xf86-video-hwcomposer])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_AUX_DIR(.)
@@ -46,32 +46,50 @@ AC_PROG_LIBTOOL
 AH_TOP([#include "xorg-server.h"])
 
 # Define a configure option for an alternate module directory
-AC_ARG_ENABLE(dga,           AS_HELP_STRING([--disable-dga], [Build DGA extension (default: yes)]), [DGA=$enableval], [DGA=yes])
-AC_ARG_WITH(xorg-module-dir, [  --with-xorg-module-dir=DIR ],
-                             [ moduledir="$withval" ],
-                             [ moduledir="$libdir/xorg/modules" ])
+AC_ARG_WITH(xorg-module-dir,
+            AS_HELP_STRING([--with-xorg-module-dir=DIR],
+                           [Default xorg module directory [[default=$libdir/xorg/modules]]]),
+            [moduledir="$withval"],
+            [moduledir="$libdir/xorg/modules"])
 AC_SUBST(moduledir)
-
 
 # Store the list of server defined optional extensions in REQUIRED_MODULES
 XORG_DRIVER_CHECK_EXT(RANDR, randrproto)
 XORG_DRIVER_CHECK_EXT(RENDER, renderproto)
-XORG_DRIVER_CHECK_EXT(XV, videoproto)
-
-if test "x$DGA" = xyes; then
-	XORG_DRIVER_CHECK_EXT(XFreeXDGA, xf86dgaproto)
-	AC_DEFINE(USE_DGA, 1, [Support DGA extension])
-fi
-AC_SUBST([DGA])
-AM_CONDITIONAL([DGA], [test "x$DGA" = xyes])
 
 # Obtain compiler/linker options for the driver dependencies
 PKG_CHECK_MODULES(XORG, [xorg-server >= 1.4.99.901] xproto fontsproto $REQUIRED_MODULES)
 
 # Checks for libraries.
 
+AC_CHECK_HEADER([hardware/hardware.h], [have_libhardware=yes], [have_libhardware=no])
 
-DRIVER_NAME=dummy
+if test "x$have_libhardware" = xyes; then
+    LIBS="$LIBS -lhardware -lsync -lhybris-hwcomposerwindow -lEGL -lGLESv2"
+    AC_DEFINE(HAVE_LIBHARDWARE,[1],[libhardware library])
+fi
+
+AM_CONDITIONAL([HAVE_LIBHARDWARE], [test x$have_libhardware = xyes])
+
+AC_ARG_ENABLE([drihybris],
+    AS_HELP_STRING([--enable-drihybris], [Enable DRIHYBRIS support]))
+
+if test "x$enable_drihybris" = xyes; then
+    AC_DEFINE(ENABLE_DRIHYBRIS,[1],[Enable DRIHYBRIS driver support])
+fi
+
+AM_CONDITIONAL([ENABLE_DRIHYBRIS], [test x$enable_drihybris = xyes])
+
+AC_ARG_ENABLE([glamor],
+    AS_HELP_STRING([--enable-glamor], [Enable experimental glamor support (requires patched Xorg server)]))
+
+AS_IF([test "x$enable_glamor" = "xyes"], [
+    AC_DEFINE(ENABLE_GLAMOR,[1],[enable glamor support])
+])
+
+AM_CONDITIONAL([ENABLE_GLAMOR], [test x$enable_glamor = xyes])
+
+DRIVER_NAME=hwcomposer
 AC_SUBST([DRIVER_NAME])
 
 AC_CONFIG_FILES([
