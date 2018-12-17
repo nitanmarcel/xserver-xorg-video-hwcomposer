@@ -5,16 +5,18 @@
 #include <string.h>
 #include "xf86.h"
 
-#include <android-config.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <stddef.h>
 #include <malloc.h>
-#include <sync/sync.h>
 
-#include "dummy.h"
+#include <android-config.h>
+#include <sync/sync.h>
+#include <hybris/hwcomposerwindow/hwcomposer.h>
+
+#include "driver.h"
 
 inline static uint32_t interpreted_version(hw_device_t *hwc_device)
 {
@@ -30,17 +32,39 @@ inline static uint32_t interpreted_version(hw_device_t *hwc_device)
 	return version;
 }
 
+void hwc_set_power_mode(ScrnInfoPtr pScrn, int disp, int mode)
+{
+	HWCPtr hwc = HWCPTR(pScrn);
+    
+	hwc_composer_device_1_t *hwcDevicePtr = hwc->hwcDevicePtr;
+	hw_device_t *hwcDevice = &hwcDevicePtr->common;
+
+	uint32_t hwc_version = hwc->hwcVersion = interpreted_version(hwcDevice);
+
+#ifdef HWC_DEVICE_API_VERSION_1_4
+	if (hwc_version == HWC_DEVICE_API_VERSION_1_4) {
+		hwcDevicePtr->setPowerMode(hwcDevicePtr, disp, (mode) ? HWC_POWER_MODE_NORMAL : HWC_POWER_MODE_OFF);
+	} else
+#endif
+#ifdef HWC_DEVICE_API_VERSION_1_5
+	if (hwc_version == HWC_DEVICE_API_VERSION_1_5) {
+		hwcDevicePtr->setPowerMode(hwcDevicePtr, disp, (mode) ? HWC_POWER_MODE_NORMAL : HWC_POWER_MODE_OFF);
+	} else
+#endif
+		hwcDevicePtr->blank(hwcDevicePtr, disp, (mode) ? 0 : 1);
+}
+
 Bool hwc_hwcomposer_init(ScrnInfoPtr pScrn)
 {
-	DUMMYPtr dPtr = DUMMYPTR(pScrn);
+	HWCPtr hwc = HWCPTR(pScrn);
 	int err;
 
 	hw_module_t const* module = NULL;
 	err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
 	assert(err == 0);
 
-	dPtr->gralloc = (gralloc_module_t*) module;
-	err = gralloc_open((const hw_module_t *) dPtr->gralloc, &dPtr->alloc);
+	hwc->gralloc = (gralloc_module_t*) module;
+	err = gralloc_open((const hw_module_t *) hwc->gralloc, &hwc->alloc);
 
 	framebuffer_device_t* fbDev = NULL;
 	framebuffer_open(module, &fbDev);
@@ -54,50 +78,38 @@ Bool hwc_hwcomposer_init(ScrnInfoPtr pScrn)
 	err = hwc_open_1(hwcModule, &hwcDevicePtr);
 	assert(err == 0);
 
-	dPtr->hwcDevicePtr = hwcDevicePtr;
+	hwc->hwcDevicePtr = hwcDevicePtr;
 	hw_device_t *hwcDevice = &hwcDevicePtr->common;
 
-	uint32_t hwc_version = interpreted_version(hwcDevice);
-
-#ifdef HWC_DEVICE_API_VERSION_1_4
-	if (hwc_version == HWC_DEVICE_API_VERSION_1_4) {
-		hwcDevicePtr->setPowerMode(hwcDevicePtr, 0, HWC_POWER_MODE_NORMAL);
-	} else
-#endif
-#ifdef HWC_DEVICE_API_VERSION_1_5
-	if (hwc_version == HWC_DEVICE_API_VERSION_1_5) {
-		hwcDevicePtr->setPowerMode(hwcDevicePtr, 0, HWC_POWER_MODE_NORMAL);
-	} else
-#endif
-		hwcDevicePtr->blank(hwcDevicePtr, 0, 0);
+	hwc_set_power_mode(pScrn, HWC_DISPLAY_PRIMARY, 1);	uint32_t hwc_version = hwc->hwcVersion = interpreted_version(hwcDevice);
 
 	uint32_t configs[5];
 	size_t numConfigs = 5;
 
-	err = hwcDevicePtr->getDisplayConfigs(hwcDevicePtr, 0, configs, &numConfigs);
+	err = hwcDevicePtr->getDisplayConfigs(hwcDevicePtr, HWC_DISPLAY_PRIMARY, configs, &numConfigs);
 	assert (err == 0);
 
 	int32_t attr_values[2];
 	uint32_t attributes[] = { HWC_DISPLAY_WIDTH, HWC_DISPLAY_HEIGHT, HWC_DISPLAY_NO_ATTRIBUTE };
 
-	hwcDevicePtr->getDisplayAttributes(hwcDevicePtr, 0,
+	hwcDevicePtr->getDisplayAttributes(hwcDevicePtr, HWC_DISPLAY_PRIMARY,
 			configs[0], attributes, attr_values);
 
 	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "width: %i height: %i\n", attr_values[0], attr_values[1]);
-	dPtr->hwcWidth = attr_values[0];
-	dPtr->hwcHeight = attr_values[1];
+	hwc->hwcWidth = attr_values[0];
+	hwc->hwcHeight = attr_values[1];
 
 	size_t size = sizeof(hwc_display_contents_1_t) + 2 * sizeof(hwc_layer_1_t);
 	hwc_display_contents_1_t *list = (hwc_display_contents_1_t *) malloc(size);
-	dPtr->hwcContents = (hwc_display_contents_1_t **) malloc(HWC_NUM_DISPLAY_TYPES * sizeof(hwc_display_contents_1_t *));
+	hwc->hwcContents = (hwc_display_contents_1_t **) malloc(HWC_NUM_DISPLAY_TYPES * sizeof(hwc_display_contents_1_t *));
 	const hwc_rect_t r = { 0, 0, attr_values[0], attr_values[1] };
 
 	int counter = 0;
 	for (; counter < HWC_NUM_DISPLAY_TYPES; counter++)
-		dPtr->hwcContents[counter] = NULL;
+		hwc->hwcContents[counter] = NULL;
 	// Assign the layer list only to the first display,
 	// otherwise HWC might freeze if others are disconnected
-	dPtr->hwcContents[0] = list;
+	hwc->hwcContents[0] = list;
 
 	hwc_layer_1_t *layer = &list->hwLayers[0];
 	memset(layer, 0, sizeof(hwc_layer_1_t));
@@ -133,7 +145,7 @@ Bool hwc_hwcomposer_init(ScrnInfoPtr pScrn)
 	layer->surfaceDamage.numRects = 0;
 #endif
 
-	dPtr->fblayer = layer = &list->hwLayers[1];
+	hwc->fblayer = layer = &list->hwLayers[1];
 	memset(layer, 0, sizeof(hwc_layer_1_t));
 	layer->compositionType = HWC_FRAMEBUFFER_TARGET;
 	layer->hints = 0;
@@ -170,4 +182,61 @@ Bool hwc_hwcomposer_init(ScrnInfoPtr pScrn)
 
 void hwc_hwcomposer_close(ScrnInfoPtr pScrn)
 {
+}
+
+static void present(void *user_data, struct ANativeWindow *window,
+								struct ANativeWindowBuffer *buffer)
+{
+	ScrnInfoPtr pScrn = (ScrnInfoPtr)user_data;
+	HWCPtr hwc = HWCPTR(pScrn);
+
+	hwc_display_contents_1_t **contents = hwc->hwcContents;
+	hwc_layer_1_t *fblayer = hwc->fblayer;
+	hwc_composer_device_1_t *hwcdevice = hwc->hwcDevicePtr;
+
+	int oldretire = contents[0]->retireFenceFd;
+	contents[0]->retireFenceFd = -1;
+
+	fblayer->handle = buffer->handle;
+	fblayer->acquireFenceFd = HWCNativeBufferGetFence(buffer);
+	fblayer->releaseFenceFd = -1;
+	int err = hwcdevice->prepare(hwcdevice, HWC_NUM_DISPLAY_TYPES, contents);
+	assert(err == 0);
+
+	err = hwcdevice->set(hwcdevice, HWC_NUM_DISPLAY_TYPES, contents);
+	/* in Android, SurfaceFlinger ignores the return value as not all
+		display types may be supported */
+	HWCNativeBufferSetFence(buffer, fblayer->releaseFenceFd);
+
+	if (oldretire != -1)
+	{
+		sync_wait(oldretire, -1);
+		close(oldretire);
+	}
+}
+
+struct ANativeWindow *hwc_get_native_window(ScrnInfoPtr pScrn) {
+	HWCPtr hwc = HWCPTR(pScrn);
+	struct ANativeWindow *win = HWCNativeWindowCreate(hwc->hwcWidth, hwc->hwcHeight, HAL_PIXEL_FORMAT_RGBA_8888, present, pScrn);
+	return win;
+}
+
+void hwc_toggle_screen_brightness(ScrnInfoPtr pScrn)
+{
+	HWCPtr hwc = HWCPTR(pScrn);
+	struct light_state_t state;
+	int brightness;
+
+	if (!hwc->lightsDevice) {
+		return;
+	}
+	brightness = (hwc->dpmsMode == DPMSModeOn) ?
+							hwc->screenBrightness : 0;
+
+	state.flashMode = LIGHT_FLASH_NONE;
+	state.brightnessMode = BRIGHTNESS_MODE_USER;
+
+	state.color = (int)((0xffU << 24) | (brightness << 16) |
+						(brightness << 8) | brightness);
+	hwc->lightsDevice->set_light(hwc->lightsDevice, &state);
 }
