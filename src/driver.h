@@ -36,20 +36,23 @@ typedef struct _color
     int blue;
 } dummy_colors;
 
+void hwc_trigger_redraw(ScrnInfoPtr pScrn);
 Bool hwc_display_pre_init(ScrnInfoPtr pScrn);
 Bool hwc_hwcomposer_init(ScrnInfoPtr pScrn);
 void hwc_hwcomposer_close(ScrnInfoPtr pScrn);
 Bool hwc_lights_init(ScrnInfoPtr pScrn);
+Bool hwc_drihybris_screen_init(ScreenPtr screen);
 
 struct ANativeWindow *hwc_get_native_window(ScrnInfoPtr pScrn);
 void hwc_toggle_screen_brightness(ScrnInfoPtr pScrn);
 void hwc_set_power_mode(ScrnInfoPtr pScrn, int disp, int mode);
 
 Bool hwc_init_hybris_native_buffer(ScrnInfoPtr pScrn);
-Bool hwc_egl_renderer_init(ScrnInfoPtr pScrn);
+Bool hwc_egl_renderer_init(ScrnInfoPtr pScrn, Bool do_glamor);
 void hwc_egl_renderer_close(ScrnInfoPtr pScrn);
 void hwc_egl_renderer_screen_init(ScreenPtr pScreen);
 void hwc_egl_renderer_screen_close(ScreenPtr pScreen);
+void *hwc_egl_renderer_thread(void *user_data);
 void hwc_egl_renderer_update(ScreenPtr pScreen);
 
 void hwc_ortho_2d(float* mat, float left, float right, float bottom, float top);
@@ -75,6 +78,7 @@ typedef struct {
 
 typedef struct {
     PFNEGLHYBRISCREATENATIVEBUFFERPROC eglHybrisCreateNativeBuffer;
+    PFNEGLHYBRISCREATEREMOTEBUFFERPROC eglHybrisCreateRemoteBuffer;
     PFNEGLHYBRISLOCKNATIVEBUFFERPROC eglHybrisLockNativeBuffer;
     PFNEGLHYBRISUNLOCKNATIVEBUFFERPROC eglHybrisUnlockNativeBuffer;
     PFNEGLHYBRISRELEASENATIVEBUFFERPROC eglHybrisReleaseNativeBuffer;
@@ -85,11 +89,13 @@ typedef struct {
     EGLDisplay display;
     EGLSurface surface;
     EGLContext context;
+    EGLContext renderContext;
     GLuint rootTexture;
     GLuint cursorTexture;
 
     float projection[16];
     EGLImageKHR image;
+    EGLSyncKHR fence;
 
     hwc_renderer_shader rootShader;
     hwc_renderer_shader projShader;
@@ -119,6 +125,7 @@ typedef struct HWCRec
 
     gralloc_module_t *gralloc;
     alloc_device_t *alloc;
+    void *libminisf;
 
     hwc_composer_device_1_t *hwcDevicePtr;
     hwc_display_contents_1_t **hwcContents;
@@ -143,6 +150,12 @@ typedef struct HWCRec
 
     DisplayModePtr modes;
     int dpmsMode;
+
+    pthread_t rendererThread;
+    int rendererIsRunning;
+    pthread_mutex_t rendererLock;
+    pthread_mutex_t dirtyLock;
+    pthread_cond_t dirtyCond;
 } HWCRec, *HWCPtr;
 
 /* The privates of the hwcomposer driver */

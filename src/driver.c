@@ -32,6 +32,7 @@
  * Driver data structures.
  */
 #include "driver.h"
+#include "pixmap.h"
 
 #ifdef ENABLE_GLAMOR
 #define GLAMOR_FOR_XORG 1
@@ -283,22 +284,11 @@ Probe(DriverPtr drv, int flags)
     return foundScreen;
 }
 
-#ifdef ENABLE_GLAMOR
 static void
-try_enable_glamor(ScrnInfoPtr pScrn)
+try_enable_drihybris(ScrnInfoPtr pScrn)
 {
-    HWCPtr hwc = HWCPTR(pScrn);
-    const char *accel_method_str = xf86GetOptValString(hwc->Options,
-                                                       OPTION_ACCEL_METHOD);
-    Bool do_glamor = (!accel_method_str ||
-                      strcmp(accel_method_str, "glamor") == 0);
-
-    if (!do_glamor) {
-        xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "glamor disabled\n");
-        return;
-    }
-
 #ifdef ENABLE_DRIHYBRIS
+    HWCPtr hwc = HWCPTR(pScrn);
 #ifndef __ANDROID__
     if (xf86LoadSubModule(pScrn, "drihybris"))
 #endif
@@ -307,12 +297,21 @@ try_enable_glamor(ScrnInfoPtr pScrn)
         xf86DrvMsg(pScrn->scrnIndex, X_INFO, "drihybris initialized\n");
     }
 #endif
+}
+
+static void
+try_enable_glamor(ScrnInfoPtr pScrn)
+{
+#ifdef ENABLE_GLAMOR
+    HWCPtr hwc = HWCPTR(pScrn);
+
+    try_enable_drihybris(pScrn);
 
 #ifndef __ANDROID__
     if (xf86LoadSubModule(pScrn, GLAMOR_EGLHYBRIS_MODULE_NAME)) {
 #endif // __ANDROID__
         if (hwc_glamor_egl_init(pScrn, hwc->renderer.display,
-                hwc->renderer.context, hwc->renderer.surface)) {
+                hwc->renderer.context, EGL_NO_SURFACE)) {
             xf86DrvMsg(pScrn->scrnIndex, X_INFO, "glamor-hybris initialized\n");
             hwc->glamor = TRUE;
         } else {
@@ -325,8 +324,8 @@ try_enable_glamor(ScrnInfoPtr pScrn)
                    "Failed to load glamor-hybris module.\n");
     }
 #endif // __ANDROID__
+#endif // ENABLE_GLAMOR
 }
-#endif
 
 # define RETURN \
     { FreeRec(pScrn);\
@@ -356,6 +355,8 @@ PreInit(ScrnInfoPtr pScrn, int flags)
     xf86CrtcPtr crtc;
     xf86OutputPtr output;
     const char *s;
+    const char *accel_method_str;
+    Bool do_glamor;
 
     if (flags & PROBE_DETECT)
         return TRUE;
@@ -494,7 +495,16 @@ PreInit(ScrnInfoPtr pScrn, int flags)
     pScrn->memPhysBase = 0;
     pScrn->fbOffset = 0;
 
-    if (!hwc_egl_renderer_init(pScrn)) {
+    accel_method_str = xf86GetOptValString(hwc->Options,
+                                                       OPTION_ACCEL_METHOD);
+    do_glamor = (!accel_method_str ||
+                      strcmp(accel_method_str, "glamor") == 0);
+
+    if (!do_glamor) {
+        xf86DrvMsg(pScrn->scrnIndex, X_CONFIG, "glamor disabled\n");
+    }
+
+    if (!hwc_egl_renderer_init(pScrn, do_glamor)) {
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                     "failed to initialize EGL renderer\n");
             return FALSE;
@@ -510,9 +520,23 @@ PreInit(ScrnInfoPtr pScrn, int flags)
 
     hwc->glamor = FALSE;
     hwc->drihybris = FALSE;
-#ifdef ENABLE_GLAMOR
-    try_enable_glamor(pScrn);
-#endif
+    if (do_glamor) {
+        try_enable_glamor(pScrn);
+    }
+    if (!hwc->glamor) {
+        try_enable_drihybris(pScrn);
+
+        if (hwc->drihybris) {
+            // Force RGBA
+            pScrn->mask.red = 0xff;
+            pScrn->mask.blue = 0xff0000;
+            pScrn->offset.red = 0;
+            pScrn->offset.blue = 16;
+
+            if (!xf86SetDefaultVisual(pScrn, -1))
+                return FALSE;
+        }
+    }
 
     return TRUE;
 }
@@ -567,6 +591,7 @@ static void hwcBlockHandler(ScreenPtr pScreen, void *timeout)
 {
     ScrnInfoPtr pScrn = xf86ScreenToScrn(pScreen);
     HWCPtr hwc = HWCPTR(pScrn);
+    hwc_renderer_ptr renderer = &hwc->renderer;
     PixmapPtr rootPixmap;
     int err;
 
@@ -580,7 +605,22 @@ static void hwcBlockHandler(ScreenPtr pScreen, void *timeout)
 
         if (num_cliprects) {
             DamageEmpty(hwc->damage);
-            hwc->dirty = TRUE;
+            if (hwc->glamor) {
+                /* create EGL sync object so renderer thread could wait for
+                 * glamor to flush commands pipeline */
+                /* (just glFlush which is called in glamor's blockHandler
+                   is not enough on Mali to get the buffer updated) */
+                if (renderer->fence != EGL_NO_SYNC_KHR) {
+                    EGLSyncKHR fence = renderer->fence;
+                    renderer->fence = EGL_NO_SYNC_KHR;
+                    eglDestroySyncKHR(renderer->display, fence);
+                }
+                renderer->fence = eglCreateSyncKHR(renderer->display,
+                                                   EGL_SYNC_FENCE_KHR, NULL);
+                /* make sure created sync object eventually signals */
+                glFlush();
+            }
+            hwc_trigger_redraw(pScrn);
         }
     }
 }
@@ -622,7 +662,14 @@ CreateScreenResources(ScreenPtr pScreen)
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "alloc: status=%d, stride=%d\n", err, hwc->stride);
 
-    hwc_egl_renderer_screen_init(pScreen);
+    hwc->rendererIsRunning = 1;
+
+    if (pthread_mutex_init(&(hwc->rendererLock), NULL) ||
+        pthread_mutex_init(&(hwc->dirtyLock), NULL) ||
+        pthread_cond_init(&(hwc->dirtyCond), NULL) ||
+        pthread_create(&(hwc->rendererThread), NULL, hwc_egl_renderer_thread, pScreen)) {
+        FatalError("Error creating rendering thread\n");
+    }
 
 #ifdef ENABLE_GLAMOR
     if (hwc->glamor)
@@ -665,7 +712,7 @@ static CARD32 hwc_update_by_timer(OsTimerPtr timer, CARD32 time, void *ptr) {
     PixmapPtr rootPixmap;
     int err;
 
-    if (hwc->dirty) {
+    if (hwc->dirty && hwc->dpmsMode == DPMSModeOn) {
         void *pixels = NULL;
         rootPixmap = pScreen->GetScreenPixmap(pScreen);
         hwc->renderer.eglHybrisUnlockNativeBuffer(hwc->buffer);
@@ -807,6 +854,13 @@ ScreenInit(SCREEN_INIT_ARGS_DECL)
         else
             xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                        "Failed to initialize XV support.\n");
+    } else {
+        if (hwc->drihybris) {
+            xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                       "Initializing drihybris.\n");
+            hwc_drihybris_screen_init(pScreen);
+        }
+        hwc_pixmap_init(pScreen);
     }
 
     /* Report any unused options (only for the first generation) */
@@ -827,8 +881,6 @@ ScreenInit(SCREEN_INIT_ARGS_DECL)
         xf86DrvMsg(pScrn->scrnIndex, X_ERROR,
                     "Failed to initialize the Present extension.\n");
     }
-
-    TimerSet(hwc->timer, 0, TIMER_DELAY, hwc_update_by_timer, (void*) pScreen);
 
     return TRUE;
 }
@@ -861,7 +913,13 @@ CloseScreen(CLOSE_SCREEN_ARGS_DECL)
         hwc->damage = NULL;
     }
 
-    hwc_egl_renderer_screen_close(pScreen);
+    hwc->rendererIsRunning = 0;
+    hwc_trigger_redraw(pScrn);
+
+    pthread_join(hwc->rendererThread, NULL);
+    pthread_mutex_destroy(&(hwc->rendererLock));
+    pthread_mutex_destroy(&(hwc->dirtyLock));
+    pthread_cond_destroy(&(hwc->dirtyCond));
 
     if (hwc->buffer != NULL)
     {
