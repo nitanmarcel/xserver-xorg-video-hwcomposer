@@ -49,6 +49,7 @@ Bool hwc_drihybris_screen_init(ScreenPtr screen);
 struct ANativeWindow *hwc_get_native_window(ScrnInfoPtr pScrn);
 void hwc_toggle_screen_brightness(ScrnInfoPtr pScrn);
 void hwc_set_power_mode(ScrnInfoPtr pScrn, int disp, int mode);
+void hwc_set_power_mode_hwcomposer2(ScrnInfoPtr pScrn, int disp, int mode);
 
 Bool hwc_init_hybris_native_buffer(ScrnInfoPtr pScrn);
 Bool hwc_egl_renderer_init(ScrnInfoPtr pScrn, Bool do_glamor);
@@ -136,6 +137,7 @@ typedef struct HWCRec
     uint32_t hwcVersion;
     int hwcWidth;
     int hwcHeight;
+    int lastPresentFence;
 
     hwc2_compat_device_t* hwc2Device;
     hwc2_compat_display_t* hwc2_primary_display;

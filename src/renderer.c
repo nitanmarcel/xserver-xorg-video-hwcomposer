@@ -354,7 +354,8 @@ void *hwc_egl_renderer_thread(void *user_data)
                 EGL_SYNC_FLUSH_COMMANDS_BIT_KHR,
                 EGL_FOREVER_KHR);
         }
-        hwc_egl_renderer_update(pScreen);
+        if (hwc->dpmsMode == DPMSModeOn)
+            hwc_egl_renderer_update(pScreen);
         pthread_mutex_unlock(&(hwc->rendererLock));
     }
 
