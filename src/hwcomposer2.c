@@ -119,6 +119,7 @@ void hwc_present_hwcomposer2(void *user_data, struct ANativeWindow *window,
     int acquireFenceFd = HWCNativeBufferGetFence(buffer);
 
     hwc2_compat_display_t* hwcDisplay = hwc->hwc2_primary_display;
+    hwc_set_power_mode_hwcomposer2(pScrn, HWC_DISPLAY_PRIMARY, HWC2_POWER_MODE_ON);
 
     error = hwc2_compat_display_validate(hwcDisplay, &numTypes,
                                                     &numRequests);
