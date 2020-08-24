@@ -16,6 +16,7 @@
 #include <android-config.h>
 #include <sync/sync.h>
 #include <hybris/hwcomposerwindow/hwcomposer.h>
+#include <android/nativebase/nativebase.h>
 
 #include "driver.h"
 
