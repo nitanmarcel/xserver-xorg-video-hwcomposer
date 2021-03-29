@@ -36,7 +36,7 @@ void hwc2_callback_hotplug(HWC2EventListener* listener, int32_t sequenceId,
                            bool primaryDisplay)
 {
     ScrnInfoPtr pScrn = ((HwcProcs_v20*) listener)->pScrn;
-	HWCPtr hwc = HWCPTR(pScrn);
+    HWCPtr hwc = HWCPTR(pScrn);
 
     xf86DrvMsg(pScrn->scrnIndex, X_INFO, "onHotplugReceived(%d, %" PRIu64 ", %s, %s)",
            sequenceId, display,
@@ -53,7 +53,7 @@ void hwc2_callback_refresh(HWC2EventListener* listener, int32_t sequenceId,
 
 Bool hwc_hwcomposer2_init(ScrnInfoPtr pScrn)
 {
-	HWCPtr hwc = HWCPTR(pScrn);
+    HWCPtr hwc = HWCPTR(pScrn);
 	int err;
     static int composerSequenceId = 0;
     
@@ -66,9 +66,9 @@ Bool hwc_hwcomposer2_init(ScrnInfoPtr pScrn)
     hwc2_compat_device_t* hwc2_device = hwc->hwc2Device = hwc2_compat_device_new(false);
     assert(hwc2_device);
 
-	//hwc_set_power_mode(pScrn, HWC_DISPLAY_PRIMARY, 1);
+    //hwc_set_power_mode(pScrn, HWC_DISPLAY_PRIMARY, 1);
 
-	hwc2_compat_device_register_callback(hwc2_device, &procs->listener,
+    hwc2_compat_device_register_callback(hwc2_device, &procs->listener,
         composerSequenceId++);
 
     for (int i = 0; i < 5 * 1000; ++i) {
@@ -78,14 +78,14 @@ Bool hwc_hwcomposer2_init(ScrnInfoPtr pScrn)
             break;
         usleep(1000);
     }
-	assert(hwc->hwc2_primary_display);
+    assert(hwc->hwc2_primary_display);
 
-	HWC2DisplayConfig *config = hwc2_compat_display_get_active_config(hwc->hwc2_primary_display);
-	assert(config);
+    HWC2DisplayConfig *config = hwc2_compat_display_get_active_config(hwc->hwc2_primary_display);
+    assert(config);
 
-	hwc->hwcWidth = config->width;
-	hwc->hwcHeight = config->height;
-	xf86DrvMsg(pScrn->scrnIndex, X_INFO, "width: %i height: %i\n", config->width, config->height);
+    hwc->hwcWidth = config->width;
+    hwc->hwcHeight = config->height;
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "width: %i height: %i\n", config->width, config->height);
 
 	hwc2_compat_layer_t* layer = hwc->hwc2_primary_layer =
         hwc2_compat_display_create_layer(hwc->hwc2_primary_display);
@@ -98,11 +98,12 @@ Bool hwc_hwcomposer2_init(ScrnInfoPtr pScrn)
     hwc2_compat_layer_set_display_frame(layer, 0, 0, hwc->hwcWidth, hwc->hwcHeight);
     hwc2_compat_layer_set_visible_region(layer, 0, 0, hwc->hwcWidth, hwc->hwcHeight);
 
-	return TRUE;
+    return TRUE;
 }
 
 void hwc_hwcomposer2_close(ScrnInfoPtr pScrn)
 {
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "hwc_hwcomposer2_close\n");
 }
 
 void hwc_present_hwcomposer2(void *user_data, struct ANativeWindow *window,
@@ -113,30 +114,21 @@ void hwc_present_hwcomposer2(void *user_data, struct ANativeWindow *window,
 
 	uint32_t numTypes = 0;
     uint32_t numRequests = 0;
-    int displayId = 0;
     hwc2_error_t error = HWC2_ERROR_NONE;
 
     int acquireFenceFd = HWCNativeBufferGetFence(buffer);
-	int syncBeforeSet = 0;
 
-    if (syncBeforeSet && acquireFenceFd >= 0) {
-        sync_wait(acquireFenceFd, -1);
-        close(acquireFenceFd);
-        acquireFenceFd = -1;
-    }
-
-	hwc2_compat_display_t* hwcDisplay = hwc->hwc2_primary_display;
+    hwc2_compat_display_t* hwcDisplay = hwc->hwc2_primary_display;
 
     error = hwc2_compat_display_validate(hwcDisplay, &numTypes,
                                                     &numRequests);
     if (error != HWC2_ERROR_NONE && error != HWC2_ERROR_HAS_CHANGES) {
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "prepare: validate failed for display %d: %d", displayId, error);
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "prepare: validate failed: %d", error);
         return;
     }
 
     if (numTypes || numRequests) {
-        xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "prepare: validate required changes for display %d: %d",
-               displayId, error);
+        xf86DrvMsg(pScrn->scrnIndex, X_ERROR, "prepare: validate required changes: %d", error);
         return;
     }
 
@@ -152,6 +144,7 @@ void hwc_present_hwcomposer2(void *user_data, struct ANativeWindow *window,
 
     int presentFence = -1;
     hwc2_compat_display_present(hwcDisplay, &presentFence);
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "hwc_present_hwcomposer2 pF: %d\n", presentFence);
 
     if (hwc->lastPresentFence != -1) {
         sync_wait(hwc->lastPresentFence, -1);
@@ -165,7 +158,9 @@ void hwc_present_hwcomposer2(void *user_data, struct ANativeWindow *window,
 
 void hwc_set_power_mode_hwcomposer2(ScrnInfoPtr pScrn, int disp, int mode)
 {
-	HWCPtr hwc = HWCPTR(pScrn);
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "hwc_set_power_mode_hwcomposer2\n");
+
+    HWCPtr hwc = HWCPTR(pScrn);
 
     if (mode == DPMSModeOff && hwc->lastPresentFence != -1) {
         sync_wait(hwc->lastPresentFence, -1);

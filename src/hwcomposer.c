@@ -79,6 +79,7 @@ void hwc_start_fake_surfaceflinger(ScrnInfoPtr pScrn) {
 	}
 
 	if (startMiniSurfaceFlinger) {
+		xf86DrvMsg(pScrn->scrnIndex, X_WARNING, "starting mini surface flinger\n");
 		startMiniSurfaceFlinger();
 	} else {
 		xf86DrvMsg(pScrn->scrnIndex, X_WARNING, "libminisf is incompatible or missing. Can not possibly start the fake SurfaceFlinger service.\n");
