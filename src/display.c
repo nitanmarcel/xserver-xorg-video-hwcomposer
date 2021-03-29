@@ -131,8 +131,9 @@ hwc_output_dpms(xf86OutputPtr output, int mode)
     pScrn = output->scrn;
     HWCPtr hwc = HWCPTR(pScrn);
 
+    xf86DrvMsg(pScrn->scrnIndex, X_INFO, "hwc_output_dpms mode: %d\n",mode);
+
     hwc->dpmsMode = mode;
-    hwc_toggle_screen_brightness(pScrn);
 
     if (mode != DPMSModeOn)
     {
@@ -145,6 +146,8 @@ hwc_output_dpms(xf86OutputPtr output, int mode)
     pthread_mutex_lock(&(hwc->rendererLock));
     hwc_set_power_mode(pScrn, HWC_DISPLAY_PRIMARY, (mode == DPMSModeOn) ? 1 : 0);
     pthread_mutex_unlock(&(hwc->rendererLock));
+
+    hwc_toggle_screen_brightness(pScrn);
 
     if (mode == DPMSModeOn)
         // Force redraw after unblank
